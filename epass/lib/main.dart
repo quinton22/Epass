@@ -7,6 +7,11 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final Map<String, Color> colorMap = {
+      'darkGold': Color(0xFFDCAA46),
+      'lightGold': Color(0xFFDAC68D),
+      'mediumGold': Color(0xFFDAB86A),
+    };
     return MaterialApp(
       title: 'Epass',
       theme: ThemeData(
@@ -19,9 +24,12 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primaryColor: Color(0xFFDAC68D),
+        primaryColor: colorMap['mediumGold'],
+        primaryColorLight: colorMap['lightGold'],
+        primaryColorDark: colorMap['darkGold'],
         backgroundColor: Colors.black,
         scaffoldBackgroundColor: Colors.black,
+        accentColor: Color(0xFF444444),
       ),
       home: MyLandingPage(title: 'Epass'),
     );
@@ -35,10 +43,8 @@ class MyLandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String assetName = 'assets/epassLogo.svg';
-    final svg = SvgPicture.asset(
-      assetName,
-      color: Theme.of(context).primaryColor,
+    final logo = SvgPicture.asset(
+      'assets/lockAndKey.svg',
       semanticsLabel: 'Epass Logo',
     );
 
@@ -47,13 +53,27 @@ class MyLandingPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          svg,
-          RaisedButton(
-            onPressed: () {
-              print('button clicked --> proceed');
-            },
-            child: Text("Go"),
-          )
+          logo,
+          Spacer(),
+          FractionallySizedBox(
+            widthFactor: 0.5,
+            child: RaisedButton(
+              onPressed: () {
+                print('button clicked --> proceed');
+              },
+              child: Container(
+                child: Text(
+                  "Go",
+                  semanticsLabel: "Go",
+                  textScaleFactor: 1.25,
+                ),
+                height: 50.0,
+                alignment: Alignment.center,
+              ),
+              shape: StadiumBorder(),
+            ),
+          ),
+          Spacer(),
         ],
       ),
     );
