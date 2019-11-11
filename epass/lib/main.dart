@@ -1,5 +1,5 @@
+import 'package:epass/pages/landingPage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 void main() => runApp(MyApp());
 
@@ -32,50 +32,6 @@ class MyApp extends StatelessWidget {
         accentColor: Color(0xFF444444),
       ),
       home: MyLandingPage(title: 'Epass'),
-    );
-  }
-}
-
-class MyLandingPage extends StatelessWidget {
-  MyLandingPage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final logo = SvgPicture.asset(
-      'assets/lockAndKey.svg',
-      semanticsLabel: 'Epass Logo',
-    );
-
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          logo,
-          Spacer(),
-          FractionallySizedBox(
-            widthFactor: 0.5,
-            child: RaisedButton(
-              onPressed: () {
-                print('button clicked --> proceed');
-              },
-              child: Container(
-                child: Text(
-                  "Go",
-                  semanticsLabel: "Go",
-                  textScaleFactor: 1.25,
-                ),
-                height: 50.0,
-                alignment: Alignment.center,
-              ),
-              shape: StadiumBorder(),
-            ),
-          ),
-          Spacer(),
-        ],
-      ),
     );
   }
 }
