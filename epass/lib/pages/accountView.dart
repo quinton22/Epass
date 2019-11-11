@@ -31,7 +31,9 @@ class _AccountViewState extends State<AccountView> {
       // retrieve and show password
       var storage = FlutterSecureStorage();
       _password = await storage.read(key: "pw${widget.account.id}");
-      _showPassword = true;
+      setState(() {
+        _showPassword = true;
+      });
     }
   }
 

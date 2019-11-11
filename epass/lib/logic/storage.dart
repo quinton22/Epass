@@ -1,14 +1,17 @@
 import 'package:epass/logic/account.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Storage {
   static final Storage _instance = Storage._();
   Future<Database> _dbFuture;
+  FlutterSecureStorage _secureStorage;
 
   factory Storage() => _instance;
 
   Storage._() {
     _setDB();
+    _secureStorage = FlutterSecureStorage();
   }
 
   // TODO: add a stream that the data is pulled from
@@ -39,9 +42,11 @@ class Storage {
         .then((results) => results.map((r) => Account.fromMap(r)).toList());
   }
 
-  Future<void> addAccount(Account account) async {
-    await _dbFuture.then((db) => db.insert("Accounts", account.asMap(),
+  Future<void> addAccount(Account account, String password) async {
+    int id = await _dbFuture.then((db) => db.insert("Accounts", account.asMap(),
         conflictAlgorithm: ConflictAlgorithm.abort));
+    // securely store password
+    await _secureStorage.write(key: 'pw$id', value: password);
   }
 
   Future<void> updateAccount(Account account) async {
@@ -54,15 +59,17 @@ class Storage {
     await _dbFuture.then((db) => db.transaction((txn) async {
           await txn.delete("Accounts", where: "id = $id");
         }));
+    await _secureStorage.delete(key: 'pw$id');
   }
 
   Future<void> removeAll() async {
     await _dbFuture.then((db) => db.transaction((txn) async {
           await txn.delete("Accounts");
         }));
+    await _secureStorage.deleteAll();
   }
 
-  Future close() {
-    _dbFuture.then((db) => db.close());
+  Future close() async {
+    await _dbFuture.then((db) => db.close());
   }
 }

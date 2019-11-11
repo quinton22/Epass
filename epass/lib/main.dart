@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Epass',
       theme: ThemeData(
+        brightness: Brightness.dark,
         primaryColor: colorMap['mediumGold'],
         primaryColorLight: colorMap['lightGold'],
         primaryColorDark: colorMap['darkGold'],
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
           body1: TextStyle(color: Colors.white),
           body2: TextStyle(color: Colors.white),
         ),
+        buttonColor: colorMap['darkGrey'],
       ),
       home: MyLandingPage(title: 'Epass'),
     );

@@ -1,6 +1,7 @@
 import 'package:epass/logic/account.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:epass/pages/accountView.dart';
+import 'package:epass/pages/addAccountPage.dart';
 import 'package:flutter/material.dart';
 
 class PasswordListPage extends StatefulWidget {
@@ -10,7 +11,6 @@ class PasswordListPage extends StatefulWidget {
 
 class _PasswordListPageState extends State<PasswordListPage> {
   final Storage _storage = Storage();
-  final GlobalKey<ScaffoldState> key = GlobalKey<ScaffoldState>();
 
   @override
   void dispose() {
@@ -18,36 +18,16 @@ class _PasswordListPageState extends State<PasswordListPage> {
     super.dispose();
   }
 
-  void addAccount() {
-    //          _storage.removeAll();
-    _storage
-        .addAccount(Account(
-      login: 'user',
-      authTypes: [],
-      site: 'site',
-    ))
-        .then((_) {
-      print('added');
-    }).catchError((_) {
-      key.currentState.showSnackBar(SnackBar(
-        content: Text("Failed to add password. Account already exists."),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: "Update",
-          onPressed: () {/*TODO*/},
-        ),
-      ));
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: key,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          addAccount();
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => AddAccountPage(
+              storage: _storage,
+            ),
+          ));
         },
         child: Icon(Icons.add),
       ),
