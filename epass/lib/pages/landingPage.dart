@@ -1,3 +1,4 @@
+import 'package:epass/pages/passwordListPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -28,7 +29,8 @@ class MyLandingPage extends StatelessWidget {
               widthFactor: 0.5,
               child: RaisedButton(
                 onPressed: () {
-                  print('button clicked --> proceed');
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                      builder: (context) => PasswordListPage()));
                 },
                 child: Container(
                   child: Text(
