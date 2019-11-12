@@ -11,6 +11,13 @@ class PasswordListPage extends StatefulWidget {
 
 class _PasswordListPageState extends State<PasswordListPage> {
   final Storage _storage = Storage();
+  Future<List<Account>> _accountFuture;
+
+  @override
+  void initState() {
+    _accountFuture = _storage.getAllAccounts();
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -23,18 +30,26 @@ class _PasswordListPageState extends State<PasswordListPage> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(
+          Navigator.of(context)
+              .push(MaterialPageRoute(
             builder: (context) => AddAccountPage(
               storage: _storage,
             ),
-          ));
+          ))
+              .then((b) {
+            print(b);
+            if (b)
+              setState(() {
+                _accountFuture = _storage.getAllAccounts();
+              });
+          });
         },
         child: Icon(Icons.add),
       ),
       body: SafeArea(
         child: FutureBuilder(
             // TODO: make stream
-            future: _storage.getAllAccounts(),
+            future: _accountFuture,
             builder:
                 (BuildContext context, AsyncSnapshot<List<Account>> snapshot) {
               if (!snapshot.hasData)
@@ -50,9 +65,11 @@ class _PasswordListPageState extends State<PasswordListPage> {
                 child: FractionallySizedBox(
                   widthFactor: 0.9,
                   child: ListView(
-                    children: snapshot.data
-                        .map((account) => AccountView(account: account))
-                        .toList(),
+                    children: snapshot.data.map((account) {
+                      var a = AccountView(account: account);
+                      a.createState();
+                      return a;
+                    }).toList(),
                   ),
                 ),
               );

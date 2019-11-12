@@ -12,8 +12,6 @@ class AccountView extends StatefulWidget {
 
 class _AccountViewState extends State<AccountView> {
   bool _showPassword;
-  String _password;
-  final String _hiddenPasswordChar = '\u25CF'; // \u25cf \u2022
 
   @override
   void initState() {
@@ -22,20 +20,45 @@ class _AccountViewState extends State<AccountView> {
   }
 
   void _togglePassword() async {
-    if (_password != null) {
-      // show/hide password
-      setState(() {
-        _showPassword = !_showPassword;
-      });
-    } else {
-      // retrieve and show password
-      var storage = FlutterSecureStorage();
-      _password = await storage.read(key: "pw${widget.account.id}");
-      setState(() {
-        _showPassword = true;
-      });
-    }
+    setState(() {
+      _showPassword = !_showPassword;
+    });
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onLongPress: () {
+        print('delete'); // TODO
+      },
+      onTap: _togglePassword,
+      child: Container(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              widget.account.site,
+              style: Theme.of(context).textTheme.title,
+            ),
+            Text('${widget.account.login}'),
+            PasswordView(
+              showPassword: _showPassword,
+              id: widget.account.id,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PasswordView extends StatelessWidget {
+  final bool showPassword;
+  final int id;
+  final String _hiddenPasswordChar = '\u25CF'; // \u25cf \u2022
+
+  const PasswordView({Key key, this.showPassword, this.id}) : super(key: key);
 
   String _getHiddenPassword() {
     String str = '';
@@ -45,23 +68,24 @@ class _AccountViewState extends State<AccountView> {
     return str;
   }
 
+  Future<String> _getPassword() async {
+    var storage = FlutterSecureStorage();
+    String password = await storage.read(key: "pw$id");
+    return password;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: _togglePassword,
-      child: Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(widget.account.site),
-            Divider(),
-            Text('Login: ${widget.account.login}'),
-            Text(
-              'Password: ${_showPassword ? (_password ?? 'No password') : _getHiddenPassword()}',
-            ),
-          ],
-        ),
-      ),
+    return FutureBuilder(
+      initialData: _getHiddenPassword(),
+      future: _getPassword(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData)
+          return Text(
+            '${showPassword ? (snapshot.data ?? '') : _getHiddenPassword()}',
+          );
+        return Text('');
+      },
     );
   }
 }

@@ -14,10 +14,14 @@ class AddAccountPage extends StatefulWidget {
 
 class _AddAccountPageState extends State<AddAccountPage> {
   bool isPassIconShowPassButton;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String _oldSite;
+  String _oldLogin;
   String _site;
   String _login;
   String _password;
+  bool _addMode;
 
   Widget showPasswordButton = IconButton(
     icon: Icon(
@@ -40,12 +44,13 @@ class _AddAccountPageState extends State<AddAccountPage> {
   @override
   void initState() {
     isPassIconShowPassButton = false;
+    _addMode = widget.addMode;
     super.initState();
   }
 
-  void addAccount() {
+  Future<bool> addAccount() {
     //          _storage.removeAll();
-    widget.storage
+    return widget.storage
         .addAccount(
             Account(
               login: _login,
@@ -53,34 +58,66 @@ class _AddAccountPageState extends State<AddAccountPage> {
               site: _site,
             ),
             _password)
-        .then((_) => print('added'))
-        .catchError((_) {
-      Scaffold.of(context).showSnackBar(SnackBar(
+        .then((_) {
+      print('added');
+      return true;
+    }).catchError((_) {
+      scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("Failed to add password. Account already exists."),
         duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
         action: SnackBarAction(
-          label: "Update",
-          onPressed: () {/*TODO*/},
+          label: "Update Existing",
+          onPressed: () {
+            setState(() {
+              _oldSite = _site;
+              _oldLogin = _login;
+              _addMode = false;
+            });
+          },
         ),
       ));
+      return false;
+    });
+  }
+
+  Future<bool> updateAccount() {
+    return widget.storage
+        .updateAccountWithSiteAndLogin(
+      _oldSite,
+      _oldLogin,
+      newSite: _site,
+      newLogin: _login,
+      password: _password,
+    )
+        .then((_) {
+      print('added');
+      return true;
+    }).catchError((_) {
+      scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text("Failed to update password."),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       floatingActionButton: FloatingActionButton.extended(
         tooltip: "Add Password",
         onPressed: () {
           if (formKey.currentState.validate()) {
             formKey.currentState.save();
-            addAccount();
-            Navigator.of(context).pop(true);
+            Future<bool> proceed = _addMode ? addAccount() : updateAccount();
+            proceed.then((b) => b ? Navigator.of(context).pop(true) : null);
           }
         },
-        icon: Icon(Icons.add),
-        label: Text('Add'),
+        icon: _addMode ? Icon(Icons.add) : null,
+        label: Text(_addMode ? 'Add' : 'Update'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(

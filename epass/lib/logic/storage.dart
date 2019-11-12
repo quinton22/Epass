@@ -45,14 +45,41 @@ class Storage {
   Future<void> addAccount(Account account, String password) async {
     int id = await _dbFuture.then((db) => db.insert("Accounts", account.asMap(),
         conflictAlgorithm: ConflictAlgorithm.abort));
+    print(id);
     // securely store password
     await _secureStorage.write(key: 'pw$id', value: password);
   }
 
-  Future<void> updateAccount(Account account) async {
-    await _dbFuture.then((db) => db.update("Accounts", account.asMap(),
-        where: "id = ${account.id}",
-        conflictAlgorithm: ConflictAlgorithm.abort));
+  Future<void> updateAccountWithId(id,
+      {site, login, password, authTypes}) async {
+    Map<String, dynamic> map = {
+      if (site != null) 'site': site,
+      if (login != null) 'login': login,
+      if (authTypes != null) 'authTypes': authTypes
+    };
+    await _dbFuture.then((db) => db.update("Accounts", map,
+        where: "id = $id", conflictAlgorithm: ConflictAlgorithm.abort));
+
+    if (password != null) {
+      _secureStorage.write(key: 'pw$id', value: password);
+    }
+  }
+
+  Future<void> updateAccountWithSiteAndLogin(site, login,
+      {newSite, newLogin, password, authTypes}) async {
+    int id = (await _dbFuture.then((db) => db.query("Accounts",
+            columns: ["id"],
+            where: "site = '$site' AND login = '$login'",
+            limit: 1)))
+        .first
+        .values
+        .first;
+
+    await updateAccountWithId(id,
+        site: newSite,
+        login: newLogin,
+        password: password,
+        authTypes: authTypes);
   }
 
   Future<void> removeAccount(int id) async {
