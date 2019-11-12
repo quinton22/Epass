@@ -1,10 +1,14 @@
 import 'package:epass/logic/account.dart';
+import 'package:epass/logic/storage.dart';
+import 'package:epass/pages/addAccountPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AccountView extends StatefulWidget {
   final Account account;
-  AccountView({this.account});
+  final Storage storage;
+  final reload;
+  AccountView({this.account, this.storage, this.reload});
 
   @override
   _AccountViewState createState() => _AccountViewState();
@@ -25,29 +29,84 @@ class _AccountViewState extends State<AccountView> {
     });
   }
 
+  void _updateAccount() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => AddAccountPage(
+        storage: widget.storage,
+        addMode: false,
+        oldAccount: widget.account,
+      ),
+    ));
+  }
+
+  void _deleteAccount() async {
+    await widget.storage.removeAccount(widget.account.id);
+    widget.reload();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onLongPress: () {
-        print('delete'); // TODO
-      },
-      onTap: _togglePassword,
-      child: Container(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              widget.account.site,
-              style: Theme.of(context).textTheme.title,
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            flex: 4,
+            child: InkWell(
+              onLongPress: _togglePassword,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    widget.account.site,
+                    style: Theme.of(context).textTheme.title,
+                  ),
+                  Text('${widget.account.login}'),
+                  PasswordView(
+                    showPassword: _showPassword,
+                    id: widget.account.id,
+                  ),
+                ],
+              ),
             ),
-            Text('${widget.account.login}'),
-            PasswordView(
-              showPassword: _showPassword,
-              id: widget.account.id,
+          ),
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: PopupMenuButton(
+                icon: Icon(Icons.more_vert),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 0,
+                    child: Text('Show Password'),
+                  ),
+                  PopupMenuItem(
+                    value: 1,
+                    child: Text('Update'),
+                  ),
+                  PopupMenuItem(
+                    value: 2,
+                    child: Text('Delete'),
+                  ),
+                ],
+                onSelected: (val) {
+                  switch (val) {
+                    case 0:
+                      _togglePassword();
+                      break;
+                    case 1:
+                      _updateAccount();
+                      break;
+                    case 2:
+                      _deleteAccount();
+                      break;
+                  }
+                },
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

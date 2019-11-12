@@ -25,6 +25,12 @@ class _PasswordListPageState extends State<PasswordListPage> {
     super.dispose();
   }
 
+  void _reload() {
+    setState(() {
+      _accountFuture = _storage.getAllAccounts();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +43,6 @@ class _PasswordListPageState extends State<PasswordListPage> {
             ),
           ))
               .then((b) {
-            print(b);
             if (b)
               setState(() {
                 _accountFuture = _storage.getAllAccounts();
@@ -66,8 +71,8 @@ class _PasswordListPageState extends State<PasswordListPage> {
                   widthFactor: 0.9,
                   child: ListView(
                     children: snapshot.data.map((account) {
-                      var a = AccountView(account: account);
-                      a.createState();
+                      var a = AccountView(
+                          account: account, storage: _storage, reload: _reload);
                       return a;
                     }).toList(),
                   ),

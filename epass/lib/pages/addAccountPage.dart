@@ -1,12 +1,19 @@
 import 'package:epass/logic/account.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddAccountPage extends StatefulWidget {
   final Storage storage;
   final bool addMode;
-  AddAccountPage({Key key, @required this.storage, this.addMode = true})
-      : super(key: key);
+  final Account oldAccount;
+
+  AddAccountPage({
+    Key key,
+    @required this.storage,
+    this.addMode = true,
+    this.oldAccount,
+  }) : super(key: key);
 
   @override
   _AddAccountPageState createState() => _AddAccountPageState();
@@ -22,27 +29,37 @@ class _AddAccountPageState extends State<AddAccountPage> {
   String _login;
   String _password;
   bool _addMode;
+  bool _obscurePassword;
 
-  Widget showPasswordButton = IconButton(
-    icon: Icon(
-      Icons.remove_red_eye,
-      semanticLabel: "Show/Hide",
-    ),
-    onPressed: () {/*TODO*/},
-    tooltip: "Show/Hide",
-  );
+  Widget showPasswordButton() => IconButton(
+        icon: Icon(
+          Icons.remove_red_eye,
+          semanticLabel: "Show/Hide",
+        ),
+        onPressed: () {
+          setState(() {
+            _obscurePassword = !_obscurePassword;
+          });
+        },
+        tooltip: "Show/Hide",
+      );
 
-  Widget autoGeneratePasswordButton = IconButton(
-    icon: Icon(
-      Icons.add_circle,
-      semanticLabel: "Autogenerate password",
-    ),
-    onPressed: () {/*TODO*/},
-    tooltip: "Autogenerate password",
-  );
+  Widget autoGeneratePasswordButton() => IconButton(
+        icon: Icon(
+          Icons.add_circle,
+          semanticLabel: "Autogenerate password",
+        ),
+        onPressed: () {/*TODO*/},
+        tooltip: "Autogenerate password",
+      );
 
   @override
   void initState() {
+    if (widget.oldAccount != null) {
+      _oldSite = widget.oldAccount.site;
+      _oldLogin = widget.oldAccount.login;
+    }
+    _obscurePassword = true;
     isPassIconShowPassButton = false;
     _addMode = widget.addMode;
     super.initState();
@@ -93,7 +110,8 @@ class _AddAccountPageState extends State<AddAccountPage> {
         .then((_) {
       print('added');
       return true;
-    }).catchError((_) {
+    }).catchError((e) {
+      print(e);
       scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("Failed to update password."),
         duration: const Duration(seconds: 2),
@@ -108,7 +126,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
     return Scaffold(
       key: scaffoldKey,
       floatingActionButton: FloatingActionButton.extended(
-        tooltip: "Add Password",
+        tooltip: _addMode ? "Add Password" : "Update Account",
         onPressed: () {
           if (formKey.currentState.validate()) {
             formKey.currentState.save();
@@ -125,7 +143,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
           padding: const EdgeInsets.all(16.0),
           children: <Widget>[
             Text(
-              "Add Password",
+              _addMode ? "Add Password" : "Update Account",
               style: Theme.of(context).textTheme.display1,
             ),
             Theme(
@@ -138,6 +156,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     TextFormField(
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.url,
+                      initialValue: widget.oldAccount != null
+                          ? widget.oldAccount.site
+                          : null,
                       decoration: InputDecoration(
                         labelText: "Site",
                         hintText: "Ex: Gmail",
@@ -156,6 +177,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.emailAddress,
                       textCapitalization: TextCapitalization.none,
+                      initialValue: widget.oldAccount != null
+                          ? widget.oldAccount.login
+                          : null,
                       decoration: InputDecoration(
                         labelText: "Login",
                         hintText: "john.doe@example.com",
@@ -173,12 +197,12 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     TextFormField(
                       textInputAction: TextInputAction.done,
                       keyboardType: TextInputType.visiblePassword,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: "Password",
                         suffixIcon: isPassIconShowPassButton
-                            ? showPasswordButton
-                            : autoGeneratePasswordButton,
+                            ? showPasswordButton()
+                            : autoGeneratePasswordButton(),
                       ),
                       onChanged: (String val) {
                         if (val.isEmpty) {
