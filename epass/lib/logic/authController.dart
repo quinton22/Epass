@@ -42,7 +42,8 @@ class AuthController {
 //      }
 //      print(await localAuth.getAvailableBiometrics());
       bool didAuthenticate = await localAuth.authenticateWithBiometrics(
-        localizedReason: 'Please authenticate to add new password',
+        localizedReason: 'Please authenticate',
+        stickyAuth: true,
       );
 
       _currentAuth[AuthType.biometric] = didAuthenticate;

@@ -20,20 +20,25 @@ class Storage {
   Future<List<Account>> get accounts => _accounts;
 
   Future<void> _setDB() async {
-//    await deleteDatabase(await getDatabasesPath() + "accounts.db");
-    _dbFuture = openDatabase('accounts.db', version: 1, onOpen: (db) async {
-      //await db.execute("DROP TABLE Accounts");
-//      await db.execute("CREATE TABLE IF NOT EXISTS Accounts ("
+    //await deleteDatabase(await getDatabasesPath() + "accounts.db");
+    final String dbPath = await getDatabasesPath();
+    final String path = dbPath + 'accounts.db';
+    print(path);
+
+    _dbFuture = openDatabase(path, version: 1, onOpen: (db) async {
+//      await db.execute("DROP TABLE Accounts");
+//      await db.execute("CREATE TABLE Accounts ("
 //          "id INTEGER PRIMARY KEY AUTOINCREMENT,"
 //          "site TEXT NOT NULL,"
 //          "login TEXT NOT NULL,"
-//          "authTypes TEXT,"
+//          "lastChanged DATE NOT NULL,"
 //          "UNIQUE(site, login))");
     }, onCreate: (Database db, int version) async {
       await db.execute("CREATE TABLE Accounts ("
           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
           "site TEXT NOT NULL,"
           "login TEXT NOT NULL,"
+          "lastChanged INTEGER NOT NULL,"
           "UNIQUE(site, login))");
     });
   }
@@ -53,10 +58,11 @@ class Storage {
   }
 
   Future<void> updateAccountWithId(id,
-      {site, login, password, authTypes}) async {
+      {site, login, password, lastChanged}) async {
     Map<String, dynamic> map = {
       if (site != null) 'site': site,
       if (login != null) 'login': login,
+      if (lastChanged != null) 'lastChanged': lastChanged,
     };
     await _dbFuture.then((db) => db.update("Accounts", map,
         where: "id = $id", conflictAlgorithm: ConflictAlgorithm.abort));
@@ -67,8 +73,24 @@ class Storage {
     refresh();
   }
 
+  Future<void> setLastChanged(lastChanged, {id, site, login}) async {
+    if (id) {
+      await updateAccountWithId(id, lastChanged: lastChanged);
+    } else {
+      int id2 = (await _dbFuture.then((db) => db.query("Accounts",
+              columns: ["id"],
+              where: "site = '$site' AND login = '$login'",
+              limit: 1)))
+          .first
+          .values
+          .first;
+      await updateAccountWithId(id2, lastChanged: lastChanged);
+    }
+    refresh();
+  }
+
   Future<void> updateAccountWithSiteAndLogin(site, login,
-      {newSite, newLogin, password}) async {
+      {newSite, newLogin, password, lastChanged}) async {
     int id = (await _dbFuture.then((db) => db.query("Accounts",
             columns: ["id"],
             where: "site = '$site' AND login = '$login'",
@@ -78,7 +100,10 @@ class Storage {
         .first;
 
     await updateAccountWithId(id,
-        site: newSite, login: newLogin, password: password);
+        site: newSite,
+        login: newLogin,
+        password: password,
+        lastChanged: lastChanged);
     refresh();
   }
 
@@ -99,9 +124,12 @@ class Storage {
   }
 
   void refresh() async {
-    _accounts = _dbFuture
-        .then((db) => db.rawQuery("SELECT * FROM Accounts ORDER BY id"))
-        .then((results) => results.map((r) => Account.fromMap(r)).toList());
+    if (_dbFuture != null)
+      _accounts = _dbFuture
+          .then((db) => db.rawQuery("SELECT * FROM Accounts ORDER BY id"))
+          .then((results) => results.map((r) => Account.fromMap(r)).toList());
+    else
+      _accounts = Future.value([]);
   }
 
   Future close() async {

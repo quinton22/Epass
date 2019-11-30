@@ -1,4 +1,6 @@
 import 'package:epass/logic/account.dart';
+import 'package:epass/logic/authController.dart';
+import 'package:epass/logic/authType.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:epass/pages/addAccountPage.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +10,9 @@ class AccountView extends StatefulWidget {
   final Account account;
   final Storage storage;
   final reload;
-  AccountView({this.account, this.storage, this.reload});
+  final AuthController authController;
+  AccountView(
+      {this.account, this.storage, this.reload, @required this.authController});
 
   @override
   _AccountViewState createState() => _AccountViewState();
@@ -24,6 +28,10 @@ class _AccountViewState extends State<AccountView> {
   }
 
   void _togglePassword() async {
+    if (!_showPassword) {
+      await widget.authController.authenticate([AuthType.biometric]);
+      if (!widget.authController.currentAuth[AuthType.biometric]) return;
+    }
     setState(() {
       _showPassword = !_showPassword;
     });
@@ -35,6 +43,7 @@ class _AccountViewState extends State<AccountView> {
         storage: widget.storage,
         addMode: false,
         oldAccount: widget.account,
+        authController: widget.authController,
       ),
     ));
   }

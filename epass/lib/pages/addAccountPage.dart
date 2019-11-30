@@ -1,4 +1,5 @@
 import 'package:epass/logic/account.dart';
+import 'package:epass/logic/authController.dart';
 import 'package:epass/logic/authType.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:flutter/material.dart';
@@ -8,10 +9,12 @@ class AddAccountPage extends StatefulWidget {
   final Storage storage;
   final bool addMode;
   final Account oldAccount;
+  final AuthController authController;
 
   AddAccountPage({
     Key key,
     @required this.storage,
+    @required this.authController,
     this.addMode = true,
     this.oldAccount,
   }) : super(key: key);
@@ -66,8 +69,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
     super.initState();
   }
 
-  Future<bool> addAccount() {
+  Future<bool> addAccount() async {
     //          _storage.removeAll();
+    await widget.authController.authenticate([AuthType.biometric]);
+    if (!widget.authController.currentAuth[AuthType.biometric])
+      return Future.value(false);
     return widget.storage
         .addAccount(
             Account(
@@ -78,7 +84,8 @@ class _AddAccountPageState extends State<AddAccountPage> {
         .then((_) {
       print('added');
       return true;
-    }).catchError((_) {
+    }).catchError((e) {
+      print(e);
       scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("Failed to add password. Account already exists."),
         duration: const Duration(seconds: 2),
@@ -106,6 +113,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
       newSite: _site,
       newLogin: _login,
       password: _password,
+      lastChanged: DateTime.now().millisecondsSinceEpoch,
     )
         .then((_) {
       print('added');

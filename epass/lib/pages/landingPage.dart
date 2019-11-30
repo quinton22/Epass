@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class MyLandingPage extends StatelessWidget {
   MyLandingPage({Key key, this.title}) : super(key: key);
+  final AuthController authController = AuthController();
 
   final String title;
 
@@ -31,11 +32,11 @@ class MyLandingPage extends StatelessWidget {
               widthFactor: 0.5,
               child: RaisedButton(
                 onPressed: () async {
-                  var authController = AuthController();
                   await authController.authenticate([AuthType.biometric]);
                   if (authController.currentAuth[AuthType.biometric])
                     Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => PasswordListPage()));
+                        builder: (context) =>
+                            PasswordListPage(authController: authController)));
                 },
                 child: Container(
                   child: Text(
