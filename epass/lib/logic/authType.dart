@@ -4,5 +4,4 @@ enum AuthType {
   text,
   email,
   pin,
-  none,
 }

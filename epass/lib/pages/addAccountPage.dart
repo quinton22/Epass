@@ -1,4 +1,5 @@
 import 'package:epass/logic/account.dart';
+import 'package:epass/logic/authType.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -71,7 +72,6 @@ class _AddAccountPageState extends State<AddAccountPage> {
         .addAccount(
             Account(
               login: _login,
-              authTypes: [], // TODO
               site: _site,
             ),
             _password)
@@ -123,6 +123,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: confirm password
     return Scaffold(
       key: scaffoldKey,
       floatingActionButton: FloatingActionButton.extended(

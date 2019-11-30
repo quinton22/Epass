@@ -6,6 +6,7 @@ class Storage {
   static final Storage _instance = Storage._();
   Future<Database> _dbFuture;
   FlutterSecureStorage _secureStorage;
+  Future<List<Account>> _accounts;
 
   factory Storage() => _instance;
 
@@ -15,6 +16,8 @@ class Storage {
   }
 
   // TODO: add a stream that the data is pulled from
+
+  Future<List<Account>> get accounts => _accounts;
 
   Future<void> _setDB() async {
 //    await deleteDatabase(await getDatabasesPath() + "accounts.db");
@@ -31,15 +34,13 @@ class Storage {
           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
           "site TEXT NOT NULL,"
           "login TEXT NOT NULL,"
-          "authTypes TEXT,"
           "UNIQUE(site, login))");
     });
   }
 
   Future<List<Account>> getAllAccounts() async {
-    return _dbFuture
-        .then((db) => db.rawQuery("SELECT * FROM Accounts ORDER BY id"))
-        .then((results) => results.map((r) => Account.fromMap(r)).toList());
+    refresh();
+    return _accounts;
   }
 
   Future<void> addAccount(Account account, String password) async {
@@ -48,6 +49,7 @@ class Storage {
     print(id);
     // securely store password
     await _secureStorage.write(key: 'pw$id', value: password);
+    refresh();
   }
 
   Future<void> updateAccountWithId(id,
@@ -55,7 +57,6 @@ class Storage {
     Map<String, dynamic> map = {
       if (site != null) 'site': site,
       if (login != null) 'login': login,
-      if (authTypes != null) 'authTypes': authTypes
     };
     await _dbFuture.then((db) => db.update("Accounts", map,
         where: "id = $id", conflictAlgorithm: ConflictAlgorithm.abort));
@@ -63,10 +64,11 @@ class Storage {
     if (password != null) {
       _secureStorage.write(key: 'pw$id', value: password);
     }
+    refresh();
   }
 
   Future<void> updateAccountWithSiteAndLogin(site, login,
-      {newSite, newLogin, password, authTypes}) async {
+      {newSite, newLogin, password}) async {
     int id = (await _dbFuture.then((db) => db.query("Accounts",
             columns: ["id"],
             where: "site = '$site' AND login = '$login'",
@@ -76,10 +78,8 @@ class Storage {
         .first;
 
     await updateAccountWithId(id,
-        site: newSite,
-        login: newLogin,
-        password: password,
-        authTypes: authTypes);
+        site: newSite, login: newLogin, password: password);
+    refresh();
   }
 
   Future<void> removeAccount(int id) async {
@@ -87,6 +87,7 @@ class Storage {
           await txn.delete("Accounts", where: "id = $id");
         }));
     await _secureStorage.delete(key: 'pw$id');
+    refresh();
   }
 
   Future<void> removeAll() async {
@@ -94,6 +95,13 @@ class Storage {
           await txn.delete("Accounts");
         }));
     await _secureStorage.deleteAll();
+    refresh();
+  }
+
+  void refresh() async {
+    _accounts = _dbFuture
+        .then((db) => db.rawQuery("SELECT * FROM Accounts ORDER BY id"))
+        .then((results) => results.map((r) => Account.fromMap(r)).toList());
   }
 
   Future close() async {

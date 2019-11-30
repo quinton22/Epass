@@ -27,13 +27,22 @@ class _PasswordListPageState extends State<PasswordListPage> {
 
   void _reload() {
     setState(() {
-      _accountFuture = _storage.getAllAccounts();
+      _accountFuture = _storage.accounts;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Accounts"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => print('go to settings'),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context)

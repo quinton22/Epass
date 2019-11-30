@@ -1,3 +1,5 @@
+import 'package:epass/logic/authController.dart';
+import 'package:epass/logic/authType.dart';
 import 'package:epass/pages/passwordListPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -28,9 +30,12 @@ class MyLandingPage extends StatelessWidget {
             FractionallySizedBox(
               widthFactor: 0.5,
               child: RaisedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => PasswordListPage()));
+                onPressed: () async {
+                  var authController = AuthController();
+                  await authController.authenticate([AuthType.biometric]);
+                  if (authController.currentAuth[AuthType.biometric])
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        builder: (context) => PasswordListPage()));
                 },
                 child: Container(
                   child: Text(
