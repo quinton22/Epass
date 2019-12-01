@@ -113,6 +113,7 @@ class Storage {
         }));
     await _secureStorage.delete(key: 'pw$id');
     refresh();
+    return;
   }
 
   Future<void> removeAll() async {
@@ -123,7 +124,7 @@ class Storage {
     refresh();
   }
 
-  void refresh() async {
+  void refresh() {
     if (_dbFuture != null)
       _accounts = _dbFuture
           .then((db) => db.rawQuery("SELECT * FROM Accounts ORDER BY id"))

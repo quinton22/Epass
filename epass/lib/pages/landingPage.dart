@@ -1,5 +1,6 @@
 import 'package:epass/logic/authController.dart';
 import 'package:epass/logic/authType.dart';
+import 'package:epass/logic/storage.dart';
 import 'package:epass/pages/passwordListPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 class MyLandingPage extends StatelessWidget {
   MyLandingPage({Key key, this.title}) : super(key: key);
   final AuthController authController = AuthController();
+  final Storage storage = Storage();
 
   final String title;
 
@@ -35,8 +37,8 @@ class MyLandingPage extends StatelessWidget {
                   await authController.authenticate([AuthType.biometric]);
                   if (authController.currentAuth[AuthType.biometric])
                     Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) =>
-                            PasswordListPage(authController: authController)));
+                        builder: (context) => PasswordListPage(
+                            authController: authController, storage: storage)));
                 },
                 child: Container(
                   child: Text(

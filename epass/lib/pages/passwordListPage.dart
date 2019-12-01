@@ -3,6 +3,7 @@ import 'package:epass/logic/authController.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:epass/pages/accountView.dart';
 import 'package:epass/pages/addAccountPage.dart';
+import 'package:epass/pages/settingsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:epass/secret.dart';
@@ -10,55 +11,103 @@ import 'dart:convert' as convert;
 
 class PasswordListPage extends StatefulWidget {
   final AuthController authController;
+  final Storage storage;
 
-  const PasswordListPage({Key key, this.authController}) : super(key: key);
+  const PasswordListPage({Key key, this.authController, this.storage})
+      : super(key: key);
 
   @override
   _PasswordListPageState createState() => _PasswordListPageState();
 }
 
 class _PasswordListPageState extends State<PasswordListPage> {
-  final Storage _storage = Storage();
   Future<List<Account>> _accountFuture;
-
-  http.Response _response;
+  List<Map<String, dynamic>> _unknownVuln;
+  List<Map<String, dynamic>> _accountVuln = List<Map<String, dynamic>>();
 
   @override
   void initState() {
+    _accountFuture = widget.storage.getAllAccounts();
     fetchDataFromAPI();
-    _accountFuture = _storage.getAllAccounts();
     super.initState();
   }
 
   @override
   void dispose() {
-    _storage.close();
+    widget.storage.close();
     super.dispose();
   }
 
   void _reload() {
     setState(() {
-      _accountFuture = _storage.accounts;
+      _accountVuln = List();
+      _accountFuture = widget.storage.accounts;
+      fetchDataFromAPI();
     });
   }
 
   void fetchDataFromAPI() async {
-    if (_response != null && _response.statusCode == 200) return;
+    final acc = await _accountFuture;
 
     final String service = "breachedaccount";
-    final String parameter =
-        Uri.encodeComponent("john.doe@example.com"); // TODO
-    final String uri =
-        "https://haveibeenpwned.com/api/v3/$service/$parameter?truncateResponse=false";
 
-    print(uri);
-    _response = await http.get(uri, headers: {
-      'hibp-api-key': HIBP_API_KEY,
-      'user-agent': 'Epass',
-    });
+    final accSet = acc.map((Account a) => a.login).toSet();
+    accSet.removeWhere((String login) =>
+        !login.contains('@') && !login.contains(r'/\.[a-z]{3}|[a-z]{2}$/'));
 
-    print(_response.statusCode);
-    print(convert.jsonDecode(_response.body));
+    List<Map<String, dynamic>> checkVuln = List<Map<String, dynamic>>();
+
+    for (String a in accSet) {
+      final String parameter = Uri.encodeComponent(a); // TODO
+      final String uri =
+          "https://haveibeenpwned.com/api/v3/$service/$parameter?truncateResponse=false";
+
+      http.Response response = await http.get(uri, headers: {
+        'hibp-api-key': HIBP_API_KEY,
+        'user-agent': 'Epass',
+      });
+
+      Map<String, dynamic> vuln = Map<String, dynamic>();
+
+      vuln['login'] = a;
+      vuln['vulnList'] = convert.jsonDecode(response.body);
+
+      checkVuln.add(vuln);
+
+//      print(_response.statusCode);
+//      print(convert.jsonDecode(_response.body));
+    }
+
+//    checkVuln.forEach((v) => print(v));
+
+    for (Account a in acc) {
+      var vv;
+      for (var vuln in checkVuln) {
+        // login is not the same
+        if (a.login != vuln['login']) continue;
+
+        for (var v in vuln['vulnList']) {
+          // changed password after the vuln occurred
+          if (a.lastChanged >
+              DateTime.parse(v['BreachDate']).millisecondsSinceEpoch) continue;
+
+          // TODO: change to making the user check off when they have changed their password
+
+          if (a.site.toLowerCase().contains(v['Title'].toLowerCase()) ||
+              a.site.toLowerCase().contains(v['Domain'].toLowerCase()) ||
+              v['Title'].toLowerCase().contains(a.site.toLowerCase()) ||
+              v['Domain'].toLowerCase().contains(a.site.toLowerCase())) {
+            vv = v;
+            break;
+          }
+        }
+      }
+      _accountVuln.add(vv);
+    }
+
+    setState(() {});
+
+//    print(_accountVuln);
   }
 
   @override
@@ -69,7 +118,10 @@ class _PasswordListPageState extends State<PasswordListPage> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.settings),
-            onPressed: () => print('go to settings'),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => SettingsPage())); // TODO
+            },
           ),
         ],
       ),
@@ -78,15 +130,21 @@ class _PasswordListPageState extends State<PasswordListPage> {
           Navigator.of(context)
               .push(MaterialPageRoute(
             builder: (context) => AddAccountPage(
-              storage: _storage,
+              storage: widget.storage,
               authController: widget.authController,
             ),
           ))
               .then((b) {
-            if (b)
+            if (b) {
               setState(() {
-                _accountFuture = _storage.getAllAccounts();
+                _accountFuture = widget.storage.accounts;
               });
+
+              _accountVuln = List();
+              fetchDataFromAPI();
+              print('here');
+            }
+            print('here2');
           });
         },
         child: Icon(Icons.add),
@@ -110,14 +168,22 @@ class _PasswordListPageState extends State<PasswordListPage> {
                 child: FractionallySizedBox(
                   widthFactor: 0.9,
                   child: ListView(
-                    children: snapshot.data.map((account) {
-                      var a = AccountView(
-                          account: account,
-                          storage: _storage,
-                          reload: _reload,
-                          authController: widget.authController);
-                      return a;
-                    }).toList(),
+                    children: snapshot.data
+                        .asMap()
+                        .map((i, account) {
+                          var a = AccountView(
+                              key: UniqueKey(),
+                              vuln: _accountVuln.length > i
+                                  ? _accountVuln[i]
+                                  : null,
+                              account: account,
+                              storage: widget.storage,
+                              reload: _reload,
+                              authController: widget.authController);
+                          return MapEntry(i, a);
+                        })
+                        .values
+                        .toList(),
                   ),
                 ),
               );

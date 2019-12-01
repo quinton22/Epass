@@ -3,6 +3,7 @@ import 'package:epass/logic/authController.dart';
 import 'package:epass/logic/authType.dart';
 import 'package:epass/logic/storage.dart';
 import 'package:epass/pages/addAccountPage.dart';
+import 'package:epass/pages/vulnerabilityDisplay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -11,8 +12,15 @@ class AccountView extends StatefulWidget {
   final Storage storage;
   final reload;
   final AuthController authController;
-  AccountView(
-      {this.account, this.storage, this.reload, @required this.authController});
+  final vuln;
+  AccountView({
+    Key key,
+    this.account,
+    this.storage,
+    this.reload,
+    @required this.authController,
+    this.vuln,
+  }) : super(key: key);
 
   @override
   _AccountViewState createState() => _AccountViewState();
@@ -20,10 +28,19 @@ class AccountView extends StatefulWidget {
 
 class _AccountViewState extends State<AccountView> {
   bool _showPassword;
+  Color _color;
 
   @override
   void initState() {
     _showPassword = false;
+    _color = Colors.white;
+    if (widget.vuln != null) {
+      _color = Colors.orangeAccent;
+      print(widget.vuln['DataClasses']);
+      if ((widget.vuln['DataClasses'] as List).contains('Passwords')) {
+        _color = Colors.red;
+      }
+    }
     super.initState();
   }
 
@@ -38,19 +55,24 @@ class _AccountViewState extends State<AccountView> {
   }
 
   void _updateAccount() {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context)
+        .push(MaterialPageRoute(
       builder: (context) => AddAccountPage(
         storage: widget.storage,
         addMode: false,
         oldAccount: widget.account,
         authController: widget.authController,
       ),
-    ));
+    ))
+        .then((b) {
+      if (b) widget.reload();
+    });
   }
 
   void _deleteAccount() async {
-    await widget.storage.removeAccount(widget.account.id);
-    widget.reload();
+    widget.storage
+        .removeAccount(widget.account.id)
+        .then((_) => widget.reload());
   }
 
   @override
@@ -63,17 +85,36 @@ class _AccountViewState extends State<AccountView> {
             flex: 4,
             child: InkWell(
               onLongPress: _togglePassword,
+              onTap: () {
+                print(widget.vuln);
+                if (widget.vuln != null)
+                  Navigator.of(context).push(VulnerabilityDisplay(
+                    child: DisplayContent(
+                      vuln: widget.vuln,
+                      color: _color,
+                    ),
+                  ));
+              }, // TODO
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Text(
                     widget.account.site,
-                    style: Theme.of(context).textTheme.title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .title
+                        .copyWith(color: _color),
                   ),
-                  Text('${widget.account.login}'),
+                  Text(
+                    '${widget.account.login}',
+                    style: TextStyle(
+                      color: _color,
+                    ),
+                  ),
                   PasswordView(
                     showPassword: _showPassword,
                     id: widget.account.id,
+                    color: _color,
                   ),
                 ],
               ),
@@ -125,8 +166,10 @@ class PasswordView extends StatelessWidget {
   final bool showPassword;
   final int id;
   final String _hiddenPasswordChar = '\u25CF'; // \u25cf \u2022
+  final Color color;
 
-  const PasswordView({Key key, this.showPassword, this.id}) : super(key: key);
+  const PasswordView({Key key, this.showPassword, this.id, this.color})
+      : super(key: key);
 
   String _getHiddenPassword() {
     String str = '';
@@ -151,6 +194,7 @@ class PasswordView extends StatelessWidget {
         if (snapshot.hasData)
           return Text(
             '${showPassword ? (snapshot.data ?? '') : _getHiddenPassword()}',
+            style: TextStyle(color: color),
           );
         return Text('');
       },

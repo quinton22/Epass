@@ -9,7 +9,7 @@ class Account {
   Account({
     @required this.site,
     @required this.login,
-  }) : lastChanged = DateTime.now().millisecondsSinceEpoch;
+  }) : lastChanged = 0;
 
   // TODO: convert to and from stored data
   Account.fromMap(Map<String, dynamic> map) {
