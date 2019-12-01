@@ -22,7 +22,7 @@ class PasswordListPage extends StatefulWidget {
 
 class _PasswordListPageState extends State<PasswordListPage> {
   Future<List<Account>> _accountFuture;
-  List<Map<String, dynamic>> _unknownVuln;
+  List<Map<String, dynamic>> _unknownVuln = List<Map<String, dynamic>>();
   List<Map<String, dynamic>> _accountVuln = List<Map<String, dynamic>>();
 
   @override
