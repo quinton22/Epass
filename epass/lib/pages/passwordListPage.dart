@@ -73,12 +73,7 @@ class _PasswordListPageState extends State<PasswordListPage> {
       vuln['vulnList'] = convert.jsonDecode(response.body);
 
       checkVuln.add(vuln);
-
-//      print(_response.statusCode);
-//      print(convert.jsonDecode(_response.body));
     }
-
-//    checkVuln.forEach((v) => print(v));
 
     for (Account a in acc) {
       var vv;
@@ -89,7 +84,10 @@ class _PasswordListPageState extends State<PasswordListPage> {
         for (var v in vuln['vulnList']) {
           // changed password after the vuln occurred
           if (a.lastChanged >
-              DateTime.parse(v['BreachDate']).millisecondsSinceEpoch) continue;
+              DateTime.parse(v['BreachDate']).millisecondsSinceEpoch) {
+            _unknownVuln.add(v);
+            continue;
+          }
 
           // TODO: change to making the user check off when they have changed their password
 
@@ -99,6 +97,8 @@ class _PasswordListPageState extends State<PasswordListPage> {
               v['Domain'].toLowerCase().contains(a.site.toLowerCase())) {
             vv = v;
             break;
+          } else {
+            _unknownVuln.add(v);
           }
         }
       }

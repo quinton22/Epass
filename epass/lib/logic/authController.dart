@@ -1,4 +1,7 @@
 import 'package:epass/logic/authType.dart';
+import 'package:epass/pages/loginPage.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 
 class AuthController {
@@ -14,15 +17,19 @@ class AuthController {
         AuthType.values.map((authType) => MapEntry(authType, false)));
   }
 
-  Future<void> authenticate(List<AuthType> authTypes) async {
+  Future<bool> authenticate(List<AuthType> authTypes,
+      {BuildContext context}) async {
+    bool t = true;
     for (AuthType authType in authTypes) {
       switch (authType) {
         case AuthType.biometric:
-          await _biometric();
+          t = t && await _biometric();
           continue;
         case AuthType.password:
+          t = t && await _password(context);
           continue;
         case AuthType.text:
+          t = t && await _phone(context);
           continue;
         case AuthType.email:
           continue;
@@ -30,9 +37,10 @@ class AuthController {
           continue;
       }
     }
+    return t;
   }
 
-  Future<void> _biometric() async {
+  Future<bool> _biometric() async {
     try {
       var localAuth = LocalAuthentication();
 
@@ -47,9 +55,28 @@ class AuthController {
       );
 
       _currentAuth[AuthType.biometric] = didAuthenticate;
+      return didAuthenticate;
     } catch (e) {
       print("Exception biometric");
       print(e);
+      return false;
     }
+  }
+
+  Future<bool> _password(BuildContext context) async {
+    // TODO
+  }
+
+  Future<bool> _phone(BuildContext context) async {
+    // TODO
+    bool b = await Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => LoginPage(
+            authType: AuthType.text,
+          ),
+        )) ??
+        false;
+
+    _currentAuth[AuthType.text] = b;
+    return b;
   }
 }

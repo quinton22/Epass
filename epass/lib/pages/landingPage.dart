@@ -34,8 +34,7 @@ class MyLandingPage extends StatelessWidget {
               widthFactor: 0.5,
               child: RaisedButton(
                 onPressed: () async {
-                  await authController.authenticate([AuthType.biometric]);
-                  if (authController.currentAuth[AuthType.biometric])
+                  if (await authController.authenticate([AuthType.biometric]))
                     Navigator.of(context).pushReplacement(MaterialPageRoute(
                         builder: (context) => PasswordListPage(
                             authController: authController, storage: storage)));
