@@ -183,6 +183,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                       onSaved: (val) => _site = val,
                     ),
                     TextFormField(
+                      autocorrect: false,
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.emailAddress,
                       textCapitalization: TextCapitalization.none,
@@ -204,6 +205,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                       onSaved: (val) => _login = val,
                     ),
                     TextFormField(
+                      autocorrect: false,
                       textInputAction: TextInputAction.done,
                       keyboardType: TextInputType.visiblePassword,
                       obscureText: _obscurePassword,

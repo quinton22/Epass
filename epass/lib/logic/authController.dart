@@ -69,14 +69,14 @@ class AuthController {
 
   Future<bool> _phone(BuildContext context) async {
     // TODO
-    bool b = await Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => LoginPage(
-            authType: AuthType.text,
-          ),
-        )) ??
-        false;
-
-    _currentAuth[AuthType.text] = b;
-    return b;
+//    bool b = await Navigator.of(context).push(MaterialPageRoute(
+//          builder: (context) => LoginPage(
+//            authType: AuthType.text,
+//          ),
+//        )) ??
+//        false;
+//
+//    _currentAuth[AuthType.text] = b;
+//    return b;
   }
 }

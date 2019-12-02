@@ -6,6 +6,7 @@ import 'package:epass/pages/addAccountPage.dart';
 import 'package:epass/pages/vulnerabilityDisplay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountView extends StatefulWidget {
   final Account account;
@@ -29,9 +30,11 @@ class AccountView extends StatefulWidget {
 class _AccountViewState extends State<AccountView> {
   bool _showPassword;
   Color _color;
+  int _timeLeft;
 
   @override
   void initState() {
+    final prefsFuture = SharedPreferences.getInstance();
     _showPassword = false;
     _color = Colors.white;
     if (widget.vuln != null) {
@@ -41,6 +44,27 @@ class _AccountViewState extends State<AccountView> {
         _color = Colors.red;
       }
     }
+
+    prefsFuture.then((prefs) {
+      int val2 = prefs.getInt('settings2') ?? 30;
+      int val3 = prefs.getInt('settings3') ?? 0;
+
+      int msAfter = val2 * (val3 == 0 ? 1 : (val3 == 1 ? 7 : 30)) * 86400000;
+      int timeLeft = widget.account.lastChanged +
+          msAfter -
+          DateTime.now().millisecondsSinceEpoch;
+
+      setState(() {
+        _timeLeft = timeLeft;
+      });
+
+      if (_color != Colors.red && timeLeft < 0) {
+        setState(() {
+          _color = Colors.orangeAccent;
+        });
+      }
+    });
+
     super.initState();
   }
 
@@ -86,7 +110,6 @@ class _AccountViewState extends State<AccountView> {
             child: InkWell(
               onLongPress: _togglePassword,
               onTap: () {
-                print(widget.vuln);
                 if (widget.vuln != null)
                   Navigator.of(context).push(VulnerabilityDisplay(
                     child: DisplayContent(
@@ -94,7 +117,15 @@ class _AccountViewState extends State<AccountView> {
                       color: _color,
                     ),
                   ));
-              }, // TODO
+                else if (_timeLeft != null)
+                  Navigator.of(context).push(VulnerabilityDisplay(
+                    child: DisplayContent(
+                      vuln: widget.vuln,
+                      color: _color,
+                      timeLeft: _timeLeft,
+                    ),
+                  ));
+              },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[

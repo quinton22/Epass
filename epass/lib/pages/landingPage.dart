@@ -20,39 +20,42 @@ class MyLandingPage extends StatelessWidget {
     );
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            FractionallySizedBox(
-              widthFactor: 0.9,
-              child: logo, // TODO: animate logo
-            ),
-            Spacer(),
-            FractionallySizedBox(
-              widthFactor: 0.5,
-              child: RaisedButton(
-                onPressed: () async {
-                  if (await authController.authenticate([AuthType.biometric]))
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => PasswordListPage(
-                            authController: authController, storage: storage)));
-                },
-                child: Container(
-                  child: Text(
-                    "Go",
-                    semanticsLabel: "Go",
-                    textScaleFactor: 1.25,
-                  ),
-                  height: 50.0,
-                  alignment: Alignment.center,
-                ),
-                shape: StadiumBorder(),
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              FractionallySizedBox(
+                widthFactor: 0.9,
+                child: logo, // TODO: animate logo
               ),
-            ),
-            Spacer(),
-          ],
+              Spacer(),
+              FractionallySizedBox(
+                widthFactor: 0.5,
+                child: RaisedButton(
+                  onPressed: () async {
+                    if (await authController.authenticate([AuthType.biometric]))
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (context) => PasswordListPage(
+                              authController: authController,
+                              storage: storage)));
+                  },
+                  child: Container(
+                    child: Text(
+                      "Go",
+                      semanticsLabel: "Go",
+                      textScaleFactor: 1.25,
+                    ),
+                    height: 50.0,
+                    alignment: Alignment.center,
+                  ),
+                  shape: StadiumBorder(),
+                ),
+              ),
+              Spacer(),
+            ],
+          ),
         ),
       ),
     );

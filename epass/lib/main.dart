@@ -16,6 +16,7 @@ class MyApp extends StatelessWidget {
     };
     return MaterialApp(
       title: 'Epass',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: colorMap['mediumGold'],
